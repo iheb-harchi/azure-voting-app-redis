@@ -14,34 +14,34 @@ pipeline {
 
         stage('Docker Build') {
             steps {
-                sh 'docker compose build'
+                sh(script: 'docker compose build')
             }
         }
 
         stage('Docker Login') {
             steps {
                 withCredentials([usernamePassword(credentialsId: 'nexus', usernameVariable: 'NEXUS_USER', passwordVariable: 'NEXUS_PASS')]) {
-                    sh 'echo $NEXUS_PASS | docker login localhost:5000 -u $NEXUS_USER --password-stdin'
+                    sh(script: 'echo $NEXUS_PASS | docker login localhost:5000 -u $NEXUS_USER --password-stdin')
                 }
             }
         }
 
         stage('Docker Push') {
             steps {
-                sh 'docker tag azure-vote-front $DOCKER_IMAGE'
-                sh 'docker push $DOCKER_IMAGE'
+                sh(script: 'docker tag azure-vote-front $DOCKER_IMAGE')
+                sh(script: 'docker push $DOCKER_IMAGE')
             }
         }
 
         stage('Start App') {
             steps {
-                sh 'docker compose up -d'
+                sh(script: 'docker compose up -d')
             }
         }
 
         stage('Run Tests') {
             steps {
-                sh 'pytest ./tests/test_sample.py'
+                sh(script: 'pytest ./tests/test_sample.py')
             }
             post {
                 success {
@@ -56,7 +56,7 @@ pipeline {
 
     post {
         always {
-            sh 'docker compose down'
+            sh(script: 'docker compose down')
         }
     }
 }
