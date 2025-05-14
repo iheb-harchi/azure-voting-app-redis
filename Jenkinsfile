@@ -1,5 +1,5 @@
 pipeline {
-    agent any
+    agent { label 'master' }
 
     environment {
         DOCKER_IMAGE = 'localhost:5000/azure-vote-front'
