@@ -1,39 +1,62 @@
 pipeline {
     agent any
 
-    stages{
-        stage('verify branch'){
+    environment {
+        DOCKER_IMAGE = 'localhost:5000/azure-vote-front'
+    }
+
+    stages {
+        stage('Verify Branch') {
             steps {
-                echo "$GIT_BRANCH"       
+                echo "$GIT_BRANCH"
             }
         }
-        stage('Docker Build'){
-            steps{
-                sh(script: 'docker compose build')
+
+        stage('Docker Build') {
+            steps {
+                sh 'docker compose build'
             }
         }
-        stage('Start App'){
-            steps{
-                sh(script: 'docker compose up -d')
+
+        stage('Docker Login') {
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'nexus', usernameVariable: 'NEXUS_USER', passwordVariable: 'NEXUS_PASS')]) {
+                    sh 'echo $NEXUS_PASS | docker login localhost:5000 -u $NEXUS_USER --password-stdin'
+                }
             }
         }
-        stage('Run Tests'){
-            steps{
-                sh(script: 'pytest ./tests/test_sample.py')
+
+        stage('Docker Push') {
+            steps {
+                sh 'docker tag azure-vote-front $DOCKER_IMAGE'
+                sh 'docker push $DOCKER_IMAGE'
+            }
+        }
+
+        stage('Start App') {
+            steps {
+                sh 'docker compose up -d'
+            }
+        }
+
+        stage('Run Tests') {
+            steps {
+                sh 'pytest ./tests/test_sample.py'
             }
             post {
                 success {
-                    echo "Tests passed :)"
+                    echo 'Tests passed :)'
                 }
                 failure {
-                    echo "Tests failed :("
+                    echo 'Tests failed :('
                 }
             }
         }
     }
-    post{
-        always{
-            sh(script: 'docker compose down')
+
+    post {
+        always {
+            sh 'docker compose down'
         }
     }
 }
